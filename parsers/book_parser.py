@@ -1,8 +1,6 @@
 import re
-import logging
-from locators.book_locator import BookLocators
 
-logger = logging.getLogger('scraping.bookparser')
+from locators.book_locators import BookLocators
 
 class BookParser:
 
@@ -11,52 +9,39 @@ class BookParser:
         'Two': 2,
         'Three': 3,
         'Four': 4,
-        'Five': 5}
-
+        'Five': 5
+    }
 
     def __init__(self, parent):
-        logger.debug(f'New book parser created from "{parent}"')
         self.parent = parent
 
     def __repr__(self):
-        return f'Book '
+        return f'Book: {self.name}, ${self.price}, ({self.rating} stars)'
 
     @property
     def name(self):
-        logger.debug('finding book name...')
         locator = BookLocators.NAME
         item_name = self.parent.select_one(locator).attrs['title']
-        logger.info(f'Found book name, "{item_name}"')
-
         return item_name
 
-    @property
     def link(self):
-        logger.debug(f'finding book link...')
         locator = BookLocators.LINK
-        item_url = self.parent.select_one(locator).attrs['href']
-        logger.info(f'found book page link, {item_url} ')
-        return item_url
+        item_link = self.parent.select_one(locator).attrs['href']
+        return item_link
 
-    @property
     def price(self):
-        logger.debug(f'finding book price...')
         locator = BookLocators.PRICE
         item_price = self.parent.select_one(locator).string
-        logger.info(f'item price element found, {item_price}')
-        return item_price
 
-    @property
+        pattern = '£([0-9]+\.[0-9]+)'
+        matcher = re.search(pattern, item_price)
+        price = float(matcher.group(1))
+        return price
+
     def rating(self):
-        logger.debug(f'finding book rating...')
         locator = BookLocators.RATING
         item_rating = self.parent.select_one(locator)
         classes = item_rating.attrs['class']
-        rating_classes = filter(lambda x: x != star-rating, classes)
-        rating_class = next(rating_classes)
-
-        logger.debug(f'found rating class, {rating_class}')
-        logger.debug('converting to integer for sorting')
-        rating = BookParser.RATINGS.get(rating_class)
-        logger.info(f'found book rating, {rating}')
+        rating_classes = [r for r in classes if r != 'star-rating']
+        rating = BookParser.RATINGS.get(rating_classes[0])
         return rating
